@@ -17,7 +17,7 @@ class BreadthFirstSearch:
 
     def search(self, root):
         # create obj to track state space
-        space = SearchSpace()
+        # space = SearchSpace()
         stats = SearchStats()
 
         openlist = deque()  # fifo-queue storing the nodes which are next to explore
@@ -31,11 +31,12 @@ class BreadthFirstSearch:
             node = openlist.popleft()
             if self.model.is_goal(node.state):
                 stats.num_goals += 1
-                logging.info(f"Goal found after {stats.nexpansions} expansions. {stats.num_goals} goal states found.")
+                # logging.info(f"Goal found after {stats.nexpansions} expansions. {stats.num_goals} goal states found.")
+                return node.extractPath(), stats
 
             if 0 <= self.max_expansions <= stats.nexpansions:
-                logging.info(f"Max. expansions reached. # expanded: {stats.nexpansions}, # goals: {stats.num_goals}.")
-                return space, stats
+                # logging.info(f"Max. expansions reached. # expanded: {stats.nexpansions}, # goals: {stats.num_goals}.")
+                return None, stats
 
             for operator, successor_state in self.model.successors(node.state):
                 if successor_state not in closed:
@@ -43,9 +44,9 @@ class BreadthFirstSearch:
                     closed.add(successor_state)
             stats.nexpansions += 1
 
-        logging.info(f"Search space exhausted. # expanded: {stats.nexpansions}, # goals: {stats.num_goals}.")
-        space.complete = True
-        return space, stats
+        # logging.info(f"Search space exhausted. # expanded: {stats.nexpansions}, # goals: {stats.num_goals}.")
+        # space.complete = True
+        return None, stats
 
 
 class SearchNode:
@@ -53,6 +54,14 @@ class SearchNode:
         self.state = state
         self.parent = parent
         self.action = action
+
+    def extractPath(self):
+        if self.action:
+            path = self.parent.extractPath() + [self.action]
+        else:
+            path = []
+
+        return path
 
 
 class SearchSpace:

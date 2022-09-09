@@ -25,9 +25,10 @@ class GroundForwardSearchModel:
     and for use in low-performance environments.
     """
 
-    def __init__(self, problem, operators):
+    def __init__(self, problem):
         self.problem = problem
-        self.operators = operators
+        self.operators = [operator for _, operator in problem.actions.items()]
+
 
     def init(self):
         return self.problem.init

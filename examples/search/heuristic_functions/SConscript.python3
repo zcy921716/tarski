@@ -1,0 +1,34 @@
+import os
+Import('common_env')
+
+lapkt_base_dir = os.environ.get('LAPKT_PATH')
+
+if lapkt_base_dir is None:
+	sys.exit("ERROR: define Environmental Variable!\n export LAPKT_PATH = \"LAPKT_root_folder_location\"")
+
+python_path = os.path.join( lapkt_base_dir,'planners/python/agnostic/' )
+
+include_paths = [ python_path + '.' ]
+
+######### MAKE SURE THIS IS THE CORRECT VERSION OF PYTHON ####################
+######### run:  $locate libpython ############################################
+
+include_paths.append( '/usr/include/python3.8' )
+common_env.Append( LIBPATH = [ '/usr/lib/x86_64-linux-gnu/', '/usr/lib/python3.8/config-3.8-x86_64-linux-gnu' ] )
+common_env.Append( LIBS = [ 'libpython3.8', '-lpython3.8.so', '-lboost_python38.so' ] )
+
+#########################################################################
+
+common_env.Append( CPPPATH = [ os.path.abspath(p) for p in include_paths ] )
+
+# Python and Boost.Python settings
+
+common_env.Append( CCFLAGS = '-fPIC' )
+common_env['STATIC_AND_SHARED_OBJECTS_ARE_THE_SAME']=1
+
+cxx_sources = Glob(python_path + '*.cxx')
+c_sources = Glob(python_path +'*.c')
+
+objects = [ common_env.Object(s) for s in cxx_sources ] + [ common_env.Object(s) for s in c_sources ]
+
+Return('objects')
