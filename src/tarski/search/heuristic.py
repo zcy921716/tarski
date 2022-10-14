@@ -27,7 +27,7 @@ class AStarSearch:
         node_count = 1
         openlist = PriorityQueue()  # fifo-queue storing the nodes which are next to explore
         openlist.put((self.heuristic(root), node_count, make_root_node(root)))
-        closed = dict(root = 0)
+        closed = {}
 
         while not openlist.empty():
             stats.iterations += 1
@@ -39,20 +39,78 @@ class AStarSearch:
                 # logging.info(f"Goal found after {stats.nexpansions} expansions. {stats.num_goals} goal states found.")
                 return node.extractPath(), stats
 
+            if node.state in closed and closed[node.state] <= node.accumulated_cost:
+                continue
+
+            closed[node.state] = node.accumulated_cost
+
             if 0 <= self.max_expansions <= stats.nexpansions:
                 # logging.info(f"Max. expansions reached. # expanded: {stats.nexpansions}, # goals: {stats.num_goals}.")
                 return None, stats
 
             for operator, successor_state in self.model.successors(node.state):
-                if successor_state not in closed or closed[successor_state] > node.accumulated_cost + 1:
-                    node_count += 1
-                    openlist.put((node.accumulated_cost + 1 + self.heuristic(successor_state), node_count, make_child_node(node, operator, successor_state, 1))) # assume uniform cost
-                    closed[successor_state] = node.accumulated_cost + 1
+                node_count += 1
+                openlist.put((node.accumulated_cost + 1 + self.heuristic(successor_state), node_count, make_child_node(node, operator, successor_state, 1))) # assume uniform cost
+
             stats.nexpansions += 1
 
         # logging.info(f"Search space exhausted. # expanded: {stats.nexpansions}, # goals: {stats.num_goals}.")
         # space.complete = True
         return None, stats
+
+
+class GreedySearch:
+    """ Full expansion of a problem through Breadth-First search.
+    Note that ATM we return no plan.
+    """
+    def __init__(self, model: GroundForwardSearchModel, max_expansions=-1, heuristic=zero_heuristic):
+        self.model = model
+        self.max_expansions = max_expansions
+        self.heuristic = heuristic
+
+    def run(self):
+        return self.search(self.model.init())
+
+    def search(self, root):
+        # create obj to track state space
+        # space = SearchSpace()
+        stats = SearchStats()
+
+        node_count = 1
+        openlist = PriorityQueue()  # fifo-queue storing the nodes which are next to explore
+        openlist.put((self.heuristic(root), node_count, make_root_node(root)))
+        closed = {}
+
+        while not openlist.empty():
+            stats.iterations += 1
+            # logging.debug("brfs: Iteration {}, #unexplored={}".format(iteration, len(open_)))
+
+            _, _, node  = openlist.get()
+            if self.model.is_goal(node.state):
+                stats.num_goals += 1
+                # logging.info(f"Goal found after {stats.nexpansions} expansions. {stats.num_goals} goal states found.")
+                return node.extractPath(), stats
+
+            if node.state in closed and closed[node.state] <= node.accumulated_cost:
+                continue
+
+            closed[node.state] = node.accumulated_cost
+
+            if 0 <= self.max_expansions <= stats.nexpansions:
+                # logging.info(f"Max. expansions reached. # expanded: {stats.nexpansions}, # goals: {stats.num_goals}.")
+                return None, stats
+
+            for operator, successor_state in self.model.successors(node.state):
+                node_count += 1
+                openlist.put((self.heuristic(successor_state), node_count, make_child_node(node, operator, successor_state, 1))) # assume uniform cost
+
+            stats.nexpansions += 1
+
+        # logging.info(f"Search space exhausted. # expanded: {stats.nexpansions}, # goals: {stats.num_goals}.")
+        # space.complete = True
+        return None, stats
+
+
 
 class TreeSearch:
     """ Full expansion of a problem through Breadth-First search.
